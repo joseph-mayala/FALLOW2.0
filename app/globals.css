@@ -18,6 +18,13 @@
   --mono: "DejaVu Mono", "DejaVu Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --side-w: 440px;
+  /* Controls and surfaces: hairlines, soft corners, one quiet shadow. */
+  --hair: #d6d5cc;
+  --hair-strong: #a9a89f;
+  --r: 10px;
+  --r-sm: 7px;
+  --lift: 0 1px 2px rgba(22, 21, 15, 0.08), 0 0 0 0.5px rgba(22, 21, 15, 0.06);
+  --sheet: -1px 0 0 var(--hair), -18px 0 40px rgba(22, 21, 15, 0.06);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -54,19 +61,20 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- buttons and tags ---------- */
 .btn {
   display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px;
-  border: 1.5px solid var(--ink); border-radius: 4px; background: transparent; color: var(--ink);
+  border: 1px solid var(--hair-strong); border-radius: var(--r); background: var(--white); color: var(--ink);
   font-size: 0.875rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
-  transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 100ms var(--ease);
+  transition: background-color 180ms var(--ease), border-color 180ms var(--ease), color 180ms var(--ease), transform 120ms var(--ease);
 }
-.btn:hover { background: var(--ink); color: var(--white); }
+.btn:hover { background: var(--paper-2); border-color: var(--ink); }
 .btn:active { transform: scale(0.97); }
-.btn[aria-current="page"], .btn[aria-pressed="true"], .btn-solid { background: var(--ink); color: var(--white); }
-.btn-solid:hover { background: var(--green); border-color: var(--green); }
+.btn[aria-current="page"], .btn[aria-pressed="true"], .btn-solid { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.btn-solid:hover { background: var(--green); border-color: var(--green); color: var(--white); }
 .btn[disabled] { opacity: 0.55; cursor: progress; }
-.btn-group { display: inline-flex; }
-.btn-group .btn { border-radius: 0; margin-left: -1.5px; }
-.btn-group .btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
-.btn-group .btn:last-child { border-radius: 0 4px 4px 0; }
+/* Two or more choices of the same kind: one track, the current choice lifted. */
+.btn-group { display: inline-flex; gap: 2px; padding: 2px; background: var(--paper-2); border: 1px solid var(--hair); border-radius: var(--r); }
+.btn-group .btn { border-color: transparent; background: transparent; border-radius: var(--r-sm); color: var(--soft); min-height: 0; align-self: stretch; }
+.btn-group .btn:hover { color: var(--ink); background: transparent; border-color: transparent; }
+.btn-group .btn[aria-current="page"], .btn-group .btn[aria-pressed="true"] { background: var(--white); color: var(--ink); font-weight: 700; box-shadow: var(--lift); }
 
 .tag {
   display: inline-block; margin: 0 0.3em; padding: 0 0.45em; border: 1px solid currentColor; border-radius: 3px;

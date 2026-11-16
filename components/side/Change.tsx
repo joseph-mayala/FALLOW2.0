@@ -46,6 +46,11 @@ function RainBlock({ site }: { site: SiteId }) {
       : <>Under our {TH}% rain-spread rule<Tag status="ours" /> the sources disagree here (annual spread {rs.pct}%). The lower and upper ends are {hi - lo} mm apart in season, so the data cannot say which statement fits a normal season. A local rain gauge record would.</>,
     <>Against the wheat water-use figure of {s.wuText}<RowTag id="r1_water_use" /> (from a passage on summer-rainfall provinces): {wuText}Stored soil water:<Tag status="assumed" />.</>,
   ];
+  const minRain = num("r3_min_rain");
+  const reachMin = s.src.filter((x) => x.season >= minRain).length;
+  conds.push(
+    <>Against the reported break-crop minimum of {minRain} mm in the season<RowTag id="r3_min_rain" />: {reachMin} of 4 season estimates reach it (range {lo} to {hi} mm). The figure is a minimum for a viable crop, not a water-use figure, and its source was not opened by us.</>,
+  );
   const lines: ReactNode[] = [
     <>NASA GPM IMERG monthly rain, May to October: {s.seasonMonths.join(" + ")} = {s.seasonMm} mm, of {s.annual} mm a year ({s.sharePct}%).</>,
     <>May to October as the growing season is our window<RowTag id="season_months" />; only the May to July sowing window is sourced<RowTag id="r1_sowing" />.</>,
@@ -53,7 +58,7 @@ function RainBlock({ site }: { site: SiteId }) {
     <>Lower-third edge = {lo} + ({hi} {MINUS} {lo}) ÷ 3 = {cut1} mm. Upper-third edge = {lo} + 2 × ({hi} {MINUS} {lo}) ÷ 3 = {cut2} mm.</>,
     <>Annual spread = ({rs.hi} {MINUS} {rs.lo}) ÷ {rs.imerg} (IMERG) = {rs.pct}%; our threshold is {TH}%.</>,
   ];
-  return <Block title="Rain in the growing season" from={s.from} conds={conds} lines={lines} />;
+  return <Block title="Rain in the growing season" from={[...s.from, "r3_min_rain"]} conds={conds} lines={lines} />;
 }
 
 function MoistureBlock({ site }: { site: SiteId }) {
@@ -81,19 +86,25 @@ function MoistureBlock({ site }: { site: SiteId }) {
 function SoilBlock({ site }: { site: SiteId }) {
   const c = soilCompare(site), TH = THRESHOLD(), p = sitePrefix(site);
   const depthIds = DEPTHS.map((d) => `${p}_clay_${d.replace("-", "_")}`);
+  const phR = get("r3_lupin_ph").range, clayR = get("r3_lupin_clay").range;
+  if (!phR || !clayR) throw new Error("Ledger: lupin soil rows have no range");
+  const [phLo, phHi] = phR, [clayLo, clayHi] = clayR;
+  const phOver = [c.pa, c.pb].filter((x) => x > phHi).length;
+  const clayOver = [c.a, c.b].filter((x) => x >= clayLo).length;
   const conds: ReactNode[] = [
     c.agree
       ? <><strong>If a soil test lands near the maps&apos; {Math.min(c.a, c.b)} to {Math.max(c.a, c.b)}% clay: </strong>the two maps agree under our {TH}% rule, reused here for soil<Tag status="ours" />, so the topsoil map is not what keeps the answer open.</>
       : <><strong>If your field is near {c.a}% clay (SoilGrids), the topsoil is sandy; near {c.b}% (iSDA), it holds about {c.ratio} times as much clay. </strong>The maps disagree under our {TH}% rule, reused here for soil<Tag status="ours" />, so only a soil test can say which.</>,
     <>Either way, tillage depth depends on the soil: {text("r1_tillage")}<RowTag id="r1_tillage" />. Which clay level counts as compaction-prone, and which rotation that favours:<Tag status="assumed" />.</>,
-    <>pH (water): SoilGrids {c.pa}, iSDA {c.pb}, difference {c.phD}. No source on this page ties pH to wheat, lupin or canola, so pH moves no statement here<Tag status="assumed" />.</>,
+    <>pH (water): SoilGrids {c.pa}, iSDA {c.pb}, difference {c.phD}. Lupin is reported to need pH {phLo} to {phHi}<RowTag id="r3_lupin_ph" />: {phOver} of 2 maps put this topsoil above {phHi}. The source does not say whether its pH is in water or KCl, so the maps cannot settle it.</>,
+    <>Lupin is reported unsuited above {clayLo} to {clayHi}% clay<RowTag id="r3_lupin_clay" />: {clayOver} of 2 maps put this topsoil at or above {clayLo}%. Both figures are unverified, so this is a question for a soil test, not a finding. No source here ties pH or clay to wheat or canola<Tag status="assumed" />.</>,
   ];
   const lines: ReactNode[] = [
     <>Topsoil clay, medians across the site&apos;s fields (iSDA from {c.n} fields): SoilGrids {c.a}%, iSDA {c.b}%.</>,
     <>Difference = {c.d} points; {c.d} ÷ {c.a} (SoilGrids) = {c.pct}%; our threshold is {TH}%. Using SoilGrids as the base is our choice.</>,
     <>SoilGrids clay by depth: {DEPTHS.map((d, i) => `${d} cm ${num(depthIds[i])}%`).join(", ")}. Both maps are models, not measurements.</>,
   ];
-  return <Block title="Soil clay and pH" from={[...c.from, "r1_tillage", ...depthIds]} conds={conds} lines={lines} />;
+  return <Block title="Soil clay and pH" from={[...c.from, "r1_tillage", "r3_lupin_ph", "r3_lupin_clay", ...depthIds]} conds={conds} lines={lines} />;
 }
 
 function TrialBlock() {

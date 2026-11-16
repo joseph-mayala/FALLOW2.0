@@ -14,7 +14,10 @@ export default function FieldShell({ site, plate, sidebar }: { site: SiteId; pla
 
   // Arriving with a #part hash opens the sidebar at that part.
   useEffect(() => {
-    if (window.location.hash.length > 1) setOpen(true);
+    const sync = () => { if (window.location.hash.length > 1) setOpen(true); };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
   }, []);
 
   useEffect(() => {
@@ -52,7 +55,9 @@ export default function FieldShell({ site, plate, sidebar }: { site: SiteId; pla
           </div>
         </div>
       </main>
+      <button type="button" className="side-scrim" aria-label="Close the rotation analysis" tabIndex={-1} onClick={() => { setOpen(false); btnRef.current?.focus(); }} />
       <aside ref={sideRef} id={sideId} className="side" aria-label="Rotation analysis and trust panel" tabIndex={-1}>
+        <button type="button" className="btn side-close" onClick={() => { setOpen(false); btnRef.current?.focus(); }}>Close</button>
         {sidebar}
       </aside>
     </div>

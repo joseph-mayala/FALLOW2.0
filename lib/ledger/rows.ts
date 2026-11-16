@@ -12,6 +12,7 @@
  *   ours       = a cut-off we chose.
  */
 import type { LedgerRow, SiteId, Status, Group, Scope } from "./types";
+import b3d from "./block3d.json";
 
 const BUILD_A = "2026-11-14";
 const TODAY = "2026-11-15";
@@ -229,6 +230,28 @@ function siteRows(site: SiteId): LedgerRow[] {
       caveat: "Predicted by a model, not surveyed.", remedy: "Run and publish the planned outline spot-check against imagery.",
     }),
   );
+  const b = b3d.sites[site];
+  const [by, bm, bd] = b.image_day.split("-").map(Number);
+  rows.push(
+    row(`${p}_b3d_min`, site, "terrain", {
+      label: `${N} lowest point of the 3D block`, value: b.elev_min, unit: "m", dp: 1, source: "AWS Terrain Tiles (terrarium, zoom 12), re-fetched by scripts/bake-3d.mjs",
+      url: "https://registry.opendata.aws/terrain-tiles/", resolution: "about 30 m", period: "static", status: "checked", confidence: "Not rated", date: b3d.retrieved,
+      caveat: "Not a survey. Read from the terrain tiles for the 3D block, which is cut a little differently from the 14 Nov drawing, so the two ranges differ.",
+      remedy: "Compare with a surveyed elevation model.",
+    }),
+    row(`${p}_b3d_max`, site, "terrain", {
+      label: `${N} highest point of the 3D block`, value: b.elev_max, unit: "m", dp: 1, source: "AWS Terrain Tiles (terrarium, zoom 12), re-fetched by scripts/bake-3d.mjs",
+      url: "https://registry.opendata.aws/terrain-tiles/", resolution: "about 30 m", period: "static", status: "checked", confidence: "Not rated", date: b3d.retrieved,
+      caveat: "Not a survey. Read from the terrain tiles for the 3D block, which is cut a little differently from the 14 Nov drawing, so the two ranges differ.",
+      remedy: "Compare with a surveyed elevation model.",
+    }),
+    row(`${p}_b3d_image`, site, "terrain", {
+      label: `${N} satellite image on the 3D block`, value: `${bd} ${MONTHS_LONG[bm - 1]} ${by}`, source: "NASA HLS (Harmonized Landsat and Sentinel-2), Sentinel-2 true colour, via NASA GIBS",
+      url: "https://www.earthdata.nasa.gov/data/projects/hls", isNasa: true, resolution: "30 m", period: "one day", status: "checked", confidence: "Not rated", date: b3d.retrieved,
+      caveat: "A picture of one cloud-free winter day that we chose. It shows what the ground looked like then. No figure on this page is derived from it, and it is not an image of June.",
+      remedy: "None needed. A season of images would be needed to say anything about crops.",
+    }),
+  );
   return rows;
 }
 
@@ -240,7 +263,7 @@ const ARC_2009 = "ARC-SGI, Small-scale small grain production, 2009";
 const ARC_2020 = "ARC-SGI, Guideline for production of small grains in the winter rainfall area, 2020";
 const ARC_TRIAL = "ARC-SGI, 2019 and 2020";
 const DAFF = "Department of Agriculture (DAFF, now DALRRD), Canola Production Guideline";
-const DAFF_URL = "https://old.dalrrd.gov.za/Portals/0/Brochures and Production guidelines/Canola - Production Guideline.pdf";
+const DAFF_URL = "https://www.nda.gov.za/docs/Brochures/Canola.pdf";
 const OPEN_PDF = "Open the guideline PDF, find the page and quote it.";
 const SINGLE = "Medium (single source)";
 
@@ -306,6 +329,10 @@ const shared: LedgerRow[] = [
     label: "Terrain height exaggeration", value: 5, unit: "times", source: "Drawing choice on the baked plate", status: "ours",
     caveat: "Heights are stretched so relief is visible. Slopes look steeper than they are.", remedy: "None needed.",
   }),
+  row("b3d_half", "global", "terrain", {
+    label: "Half-width of the 3D block", value: b3d.half_deg, unit: "degrees", dp: 2, source: "Our own choice of extent around the site centre", status: "ours",
+    caveat: "The 3D block is a square this many degrees either side of the site centre. It is a drawing extent, not a farm boundary.", remedy: "None needed.",
+  }),
   row("clay_scale_max", "global", "soil", {
     label: "Top of the clay bar scale", value: 40, unit: "%", source: "Drawing choice on the baked plate", status: "ours",
     caveat: "The bar runs from 0 to this value.", remedy: "None needed.",
@@ -346,6 +373,14 @@ const shared: LedgerRow[] = [
   noSource("r1_root", "r1", "Wheat root depth", "A wheat rooting depth for Western Cape soils from an extension document."),
   noSource("r1_nitrogen", "r1", "Nitrogen effect of wheat on wheat", "A nitrogen figure for wheat after wheat from an ARC-SGI or university trial."),
 
+  row("r1_region_rain", "both", "r1", {
+    label: "Annual rain where Western Cape wheat is grown, as reported", value: "350 to more than 460", unit: "mm per year",
+    source: "FAO, Fertilizer use by crop in South Africa, 2005, as cited in the team research register", url: "https://www.fao.org/3/y5998e/y5998e.htm",
+    resolution: "Swartland and Rûens as regions", period: "2005 publication", status: "unverified", confidence: "Low (page not opened by us)", date: TODAY,
+    caveat: "The FAO page returned not found for us on 15 Nov 2026. Annual rain for a region, not the water a wheat crop uses.",
+    remedy: "Find the FAO document at its current address and quote the sentence.",
+  }),
+
   /* ---- R3 break crop ---- */
   row("r3_tillage", "both", "r3", {
     label: "Tillage treatments in the trial", value: "No-tillage and minimum tillage were treatments alongside the lupin and canola rotation",
@@ -359,7 +394,8 @@ const shared: LedgerRow[] = [
     label: "Canola planting window", value: "April to early June for highest yield; significant yield reduction if planted after 15 June",
     source: DAFF, url: DAFF_URL, resolution: "national guideline, not specific to either site", period: "publication year not confirmed",
     status: "unverified", confidence: "Low (document not yet opened by us)",
-    caveat: "Relayed from a secondary summary (Farmers Weekly) of this guideline. We could not open the PDF to quote the page. Canola only, not lupin.",
+    page: "p. 4, per the team research register", date: TODAY,
+    caveat: "Relayed from a secondary summary (Farmers Weekly) of this guideline. The team research register gives a page, but the PDF would not open for us on 15 Nov 2026, so the quote is not confirmed. Canola only, not lupin.",
     remedy: OPEN_PDF,
   }),
   row("r3_heat", "both", "r3", {
@@ -367,14 +403,55 @@ const shared: LedgerRow[] = [
     value: "Very susceptible to temperatures above 27 °C and to drought stress during flowering; planting in May lowers that risk",
     source: DAFF, url: DAFF_URL, resolution: "national guideline, not specific to either site", period: "publication year not confirmed",
     status: "unverified", confidence: "Low (document not yet opened by us)",
-    caveat: "Relayed from a secondary summary, not checked against the PDF by us. Canola only.", remedy: OPEN_PDF,
+    page: "p. 2, per the team research register", date: TODAY,
+    caveat: "Relayed from a secondary summary. The team research register gives a page, but the PDF would not open for us on 15 Nov 2026, so the quote is not confirmed. Canola only.", remedy: OPEN_PDF,
   }),
   row("r3_planting_moisture", "both", "r3", {
     label: "Canola planting needs moist topsoil", value: "Cannot be planted when the top 5 to 7.5 cm of soil has dried out",
     source: DAFF, url: DAFF_URL, resolution: "national guideline, not specific to either site", period: "publication year not confirmed",
     status: "unverified", confidence: "Low (document not yet opened by us)",
-    caveat: "Relayed from a secondary summary, not checked against the PDF by us. The modelled soil-wetness bars are a coarse model and not a measurement of the top 5 cm.",
+    page: "p. 3, per the team research register", date: TODAY,
+    caveat: "Relayed from a secondary summary. The team research register gives a page, but the PDF would not open for us on 15 Nov 2026, so the quote is not confirmed. The modelled soil-wetness bars are a coarse model and not a measurement of the top 5 cm.",
     remedy: OPEN_PDF,
+  }),
+
+  row("r3_min_rain", "both", "r3", {
+    label: "Break crop minimum season rain, as reported", value: 300, unit: "mm per season",
+    source: "Department of Agriculture canola guideline and Western Cape Department of Agriculture, as cited in the team research register",
+    url: "https://www.nda.gov.za/docs/Brochures/Canola.pdf", resolution: "national guideline, not specific to either site", period: "publication year not confirmed",
+    status: "unverified", confidence: "Low (document not opened by us)", date: TODAY,
+    caveat: "A reported minimum for a viable dryland canola or lupin crop, not a seasonal water-use figure. The guideline PDF would not open for us on 15 Nov 2026, so the figure and its page are not confirmed.",
+    remedy: OPEN_PDF,
+  }),
+  row("r3_crown_rot", "both", "r3", {
+    label: "Break crops and Fusarium crown rot",
+    value: "Break crops that do not host the fungus (canola, lupin, medic) are reported to lower crown rot severity in the wheat that follows, compared with wheat on wheat",
+    source: "Theron and others, Crop Protection, as cited in the team research register", url: "https://doi.org/10.1016/j.cropro.2022.106175",
+    resolution: "journal paper", period: "publication year not confirmed", status: "unverified", confidence: "Low (paper not opened by us)", date: TODAY,
+    caveat: "The publisher page would not open for us on 15 Nov 2026, so the title, year, site and finding are not confirmed. No size of effect is given.",
+    remedy: "Open the paper, quote the finding and its size, and confirm the trial site.",
+  }),
+  row("r3_lupin_ph", "both", "r3", {
+    label: "Narrow-leaf lupin soil pH range, as reported", value: "4.8 to 6.5", range: [4.8, 6.5], unit: "pH",
+    source: "Protein Research Foundation and Western Cape Department of Agriculture, as cited in the team research register", url: "https://www.proteinresearch.net/",
+    resolution: "written guideline", period: "not stated", status: "unverified", confidence: "Low (figures not found at the cited site)", date: TODAY,
+    caveat: "Lupin is also reported not to tolerate free lime. We opened the cited site on 15 Nov 2026 and did not find these figures on the pages we read. Whether the pH is measured in water or in KCl is not stated, so it cannot be compared with the soil maps without care.",
+    remedy: "Find the lupin production guide this range comes from and quote the page.",
+  }),
+  row("r3_lupin_clay", "both", "r3", {
+    label: "Clay content above which narrow-leaf lupin is reported unsuited", value: "20 to 25", range: [20, 25], unit: "% clay",
+    source: "Protein Research Foundation and Western Cape Department of Agriculture, as cited in the team research register", url: "https://www.proteinresearch.net/",
+    resolution: "written guideline", period: "not stated", status: "unverified", confidence: "Low (figures not found at the cited site)", date: TODAY,
+    caveat: "We opened the cited site on 15 Nov 2026 and did not find this figure on the pages we read.",
+    remedy: "Find the lupin production guide this figure comes from and quote the page.",
+  }),
+  row("r3_longterm_trials", "both", "r3", {
+    label: "Long-term rotation trials that could fill the gaps",
+    value: "Langgewens (Swartland) and Tygerhoek (Overberg) conservation agriculture trials, Western Cape Department of Agriculture with Stellenbosch University",
+    source: "Western Cape Department of Agriculture (Elsenburg), as cited in the team research register", url: "https://www.elsenburg.com/",
+    resolution: "two research farms", period: "start years not confirmed", status: "unverified", confidence: "Low (no trial page opened by us)", date: TODAY,
+    caveat: "Named as the place to look, not used for any figure. The per-season yield records are held by the research team and are not public, so this tool runs no back-test.",
+    remedy: "Ask the Elsenburg conservation agriculture team for the published trial summaries.",
   }),
 
   /* ---- ARC trial ---- */
@@ -409,23 +486,28 @@ const shared: LedgerRow[] = [
 
   /* ---- source grid sizes, for the resolution exhibit ---- */
   row("res_imerg", "global", "resolution", {
-    label: "NASA GPM IMERG grid cell", value: 0.1, unit: "degrees", dp: 1, source: "NASA GPM IMERG product description",
-    url: "https://gpm.nasa.gov/data/imerg", isNasa: true, status: "unverified", confidence: "Not rated",
-    caveat: "Carried over from Build A. The dataset page was not opened in this build.", remedy: "Open the IMERG documentation and quote the grid size.",
+    label: "NASA GPM IMERG grid cell", value: 0.1, unit: "degrees", dp: 1, source: "NASA GPM, IMERG V06 Technical Documentation",
+    url: "https://gpm.nasa.gov/resources/documents/IMERG-V06-Technical-Documentation", isNasa: true, status: "checked", confidence: "Read from the product documentation", date: TODAY,
+    caveat: "The documentation describes half-hourly fields on a grid of this size. One cell covers many farms.", remedy: "None needed.",
   }),
   row("res_merra_lat", "global", "resolution", {
-    label: "MERRA-2 grid cell, north to south", value: 0.5, unit: "degrees", dp: 1, source: "NASA POWER documentation (MERRA-2 source grid)",
-    url: POWER_URL, isNasa: true, status: "unverified", confidence: "Not rated",
-    caveat: "Carried over from Build A. The documentation page was not opened in this build.", remedy: "Open the POWER methodology page and quote the grid size.",
+    label: "MERRA-2 grid cell, north to south", value: 0.5, unit: "degrees", dp: 1, source: "NASA POWER methodology page (meteorological data grid)",
+    url: "https://power.larc.nasa.gov/docs/methodology/", isNasa: true, status: "checked", confidence: "Read from the product documentation", date: TODAY,
+    caveat: "The methodology page gives half a degree of latitude by five-eighths of a degree of longitude for meteorological data.", remedy: "None needed.",
   }),
   row("res_merra_lon", "global", "resolution", {
-    label: "MERRA-2 grid cell, east to west", value: 0.625, unit: "degrees", dp: 3, source: "NASA POWER documentation (MERRA-2 source grid)",
-    url: POWER_URL, isNasa: true, status: "unverified", confidence: "Not rated",
-    caveat: "Carried over from Build A. The documentation page was not opened in this build.", remedy: "Open the POWER methodology page and quote the grid size.",
+    label: "MERRA-2 grid cell, east to west", value: 0.625, unit: "degrees", dp: 3, source: "NASA POWER methodology page (meteorological data grid)",
+    url: "https://power.larc.nasa.gov/docs/methodology/", isNasa: true, status: "checked", confidence: "Read from the product documentation", date: TODAY,
+    caveat: "The methodology page gives half a degree of latitude by five-eighths of a degree of longitude for meteorological data.", remedy: "None needed.",
+  }),
+  row("res_era5", "global", "resolution", {
+    label: "ERA5 native grid cell", value: 0.28125, unit: "degrees", dp: 5, source: "ECMWF, ERA5 data documentation",
+    url: "https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation", status: "checked", confidence: "Read from the product documentation", date: TODAY,
+    caveat: "About 31 km. The team research register listed a quarter of a degree, which is the grid ERA5 is usually downloaded on, not its native one.", remedy: "None needed.",
   }),
   row("res_soilgrids", "global", "resolution", {
-    label: "SoilGrids cell", value: 250, unit: "m", source: "ISRIC SoilGrids documentation", url: SG_URL, status: "unverified", confidence: "Not rated",
-    caveat: "Carried over from Build A. The documentation page was not opened in this build.", remedy: "Open the SoilGrids documentation and quote the cell size.",
+    label: "SoilGrids cell", value: 250, unit: "m", source: "ISRIC SoilGrids page", url: SG_URL, status: "checked", confidence: "Read from the product page", date: TODAY,
+    caveat: "The page describes global soil property maps at this resolution. A model grid, not a sampling density.", remedy: "None needed.",
   }),
   row("res_isda", "global", "resolution", {
     label: "iSDA soil cell", value: 30, unit: "m", source: "iSDAsoil documentation", url: "https://www.isda-africa.com/isdasoil/", status: "unverified", confidence: "Not rated",
@@ -443,15 +525,30 @@ const shared: LedgerRow[] = [
 
   /* ---- licence and app facts ---- */
   row("licence_ftw", "both", "licence", {
-    label: "Fields of the World licence", value: "CC-BY-4.0, as credited on the plate", source: "Plate credit line; Fields of the World dataset page",
-    url: "https://fieldsofthe.world/", status: "unverified", confidence: "Not verified", date: TODAY,
-    caveat: "Not verified. The dataset page could not be reached from the build environment on 15 Nov 2026. The project's code README says the collection mixes CC-BY and non-commercial sources, so the licence for the South Africa outlines has to be read country by country.",
-    remedy: "Open the Fields of the World dataset page and read the licence for the South Africa outlines.",
+    label: "Fields of the World licence, South Africa outlines", value: "CC-BY-NC-SA-4.0",
+    source: "Fields of the World v1.0.0 dataset page (Kerner Lab, Source Cooperative), country table",
+    url: "https://source.coop/kerner-lab/fields-of-the-world", status: "checked", confidence: "Read from the dataset's country table", date: TODAY,
+    caveat: "Non-commercial and share-alike: the outlines may be shown with credit for non-commercial use, and anything made from them carries the same licence. The plate drawn on 14 Nov 2026 credited CC-BY-4.0. That was wrong for South Africa and is corrected here.",
+    remedy: "None needed. Read the table again if the dataset version changes.",
+  }),
+  row("ftw_year", "both", "outlines", {
+    label: "Fields of the World, year the South Africa outlines describe", value: 2018, unit: "", source: "Fields of the World v1.0.0 dataset page, country table",
+    url: "https://source.coop/kerner-lab/fields-of-the-world", status: "checked", confidence: "Read from the dataset's country table", date: TODAY,
+    caveat: "The outlines describe fields as they were that year. Field boundaries change.", remedy: "A newer outline set, or a check against recent imagery.",
+  }),
+  row("ftw_parcels", "both", "outlines", {
+    label: "Fields of the World, South Africa parcels in the dataset", value: 6568, unit: "parcels", source: "Fields of the World v1.0.0 dataset page, country table",
+    url: "https://source.coop/kerner-lab/fields-of-the-world", status: "checked", confidence: "Read from the dataset's country table", date: TODAY,
+    caveat: "The size of the labelled South Africa set the outline model learned from. Not the number of outlines in either block.", remedy: "None needed.",
   }),
   row("coast", "global", "app", {
     label: "Globe land outline", value: "Natural Earth 1:110m land, public domain", source: "Natural Earth via the world-atlas package", url: "https://www.naturalearthdata.com/",
     status: "checked", confidence: "Not rated", date: TODAY, caveat: "A coarse coastline for orientation only. Not used in any figure.",
     remedy: "None needed.",
+  }),
+  row("earth_img", "global", "app", {
+    label: "Globe imagery", value: "NASA Blue Marble, shaded relief and bathymetry", source: "NASA Blue Marble Next Generation, via NASA GIBS", url: "https://visibleearth.nasa.gov/collection/1484/blue-marble",
+    isNasa: true, status: "checked", confidence: "Not rated", date: b3d.retrieved, caveat: "A composite picture for orientation only. Not used in any figure.", remedy: "None needed.",
   }),
   row("gazetteer", "global", "app", {
     label: "Place search list", value: "approximate coordinates, typed in by hand", source: "Compiled by hand for this build", status: "unverified",

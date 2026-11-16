@@ -34,14 +34,14 @@ export function Answer({ site }: { site: SiteId }) {
 /* ------------------------------------------------------------------ */
 /* 1. Descriptive                                                       */
 /* ------------------------------------------------------------------ */
-const R1 = ["r1_water_use", "r1_sowing", "r1_tillage", "r1_disease", "r1_root", "r1_nitrogen"];
-const R3 = ["r3_tillage", "r3_n_credit", "r3_root", "r3_water", "r3_window", "r3_heat", "r3_planting_moisture"];
+const R1 = ["r1_water_use", "r1_region_rain", "r1_sowing", "r1_tillage", "r1_disease", "r1_root", "r1_nitrogen"];
+const R3 = ["r3_tillage", "r3_crown_rot", "r3_n_credit", "r3_root", "r3_water", "r3_min_rain", "r3_window", "r3_heat", "r3_planting_moisture", "r3_lupin_ph", "r3_lupin_clay", "r3_longterm_trials"];
 
 function valueText(r: LedgerRow): string {
   if (r.value === null) return "No figure";
   if (Array.isArray(r.value)) return r.value.join(", ") + (r.unit ? ` ${r.unit}` : "");
   if (typeof r.value === "number") return `${r.value.toFixed(r.dp)}${r.unit ? ` ${r.unit}` : ""}`;
-  return r.unit && (r.unit === "mm per season" || r.unit === "ha") ? `${r.value} ${r.unit}` : String(r.value);
+  return r.unit ? `${r.value} ${r.unit}` : String(r.value);
 }
 
 function Fact({ id }: { id: string }) {
@@ -135,11 +135,11 @@ function Resolution({ site }: { site: SiteId }) {
   return (
     <figure className="resfig">
       <svg viewBox="0 0 300 300" role="img" aria-label={`One NASA GPM IMERG rain cell drawn to scale, with a ${c.fieldHa} hectare field as a small square inside it.`} data-calc={c.from.join(" ")}>
-        <rect x="0.75" y="0.75" width="298.5" height="298.5" fill="#e4ead8" stroke="#3f5a2a" strokeWidth="1.5" />
-        <rect x={150 - field / 2} y={150 - field / 2} width={field} height={field} fill="#16150f" />
-        <rect x={150 + 14} y={150 - sg / 2} width={sg} height={sg} fill="#a8412a" />
-        <path d={`M150 ${150 - field / 2 - 4}V118h-34`} fill="none" stroke="#16150f" strokeWidth="0.8" />
-        <path d={`M${164 + sg / 2} ${150 + sg / 2 + 3}V182h34`} fill="none" stroke="#a8412a" strokeWidth="0.8" />
+        <rect x="0.75" y="0.75" width="298.5" height="298.5" fill="var(--green-wash)" stroke="var(--bar)" strokeWidth="1.5" />
+        <rect x={150 - field / 2} y={150 - field / 2} width={field} height={field} fill="var(--ink)" />
+        <rect x={150 + 14} y={150 - sg / 2} width={sg} height={sg} fill="var(--low)" />
+        <path d={`M150 ${150 - field / 2 - 4}V118h-34`} fill="none" stroke="var(--ink)" strokeWidth="0.8" />
+        <path d={`M${164 + sg / 2} ${150 + sg / 2 + 3}V182h34`} fill="none" stroke="var(--low)" strokeWidth="0.8" />
         <text x="112" y="121" textAnchor="end" className="res-t">a field</text>
         <text x="202" y="186" className="res-t">a SoilGrids cell</text>
         <text x="10" y="22" className="res-t res-g">one IMERG rain cell</text>
@@ -339,10 +339,10 @@ export function Sources() {
         <b>Field outlines:</b> Fields of the World. <Led ids="licence_ftw">{text("licence_ftw")}.</Led><RowTag id="licence_ftw" />{" "}
         <Led ids="licence_ftw">{get("licence_ftw").caveat}</Led> The outlines are computer predictions, not surveyed boundaries.
       </p>
-      <p className="small"><b>Globe coastline:</b> <Led ids="coast">{text("coast")}</Led>.</p>
+      <p className="small"><b>Globe:</b> <Led ids="earth_img">{text("earth_img")}</Led>, bundled with the page. Without WebGL a drawn globe is shown instead: <Led ids="coast">{text("coast")}</Led>.</p>
       <p className="small">
-        <b>AI use:</b> AI agents (Claude, Anthropic) wrote the page code, packaged the data and drafted the copy, under human direction. The block drawing is a
-        baked image from the earlier build, drawn by code from data files that are not all in this repository; it is not redrawn live. The optional analysis calls Google Gemini and is labelled as AI-generated. Nothing here has been reviewed by a grower.
+        <b>AI use:</b> AI agents (Claude, Anthropic) wrote the page code, packaged the data and drafted the copy, under human direction. The 3D block is drawn in the browser from a NASA
+        satellite image and terrain heights bundled with the page. The flat drawing is a baked image from the earlier build, drawn by code from data files that are not all in this repository. The optional analysis calls Google Gemini and is labelled as AI-generated. Nothing here has been reviewed by a grower.
       </p>
       <p className="small">Built for the NASA Space Apps Challenge <Struct why="event year">2026</Struct>, Field Shift challenge. Not affiliated with or endorsed by NASA.</p>
       <p className="small">Links open the provider&apos;s site. This page itself makes no third-party requests.</p>

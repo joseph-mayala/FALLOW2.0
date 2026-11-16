@@ -1,0 +1,21 @@
+{
+ "half_deg": 0.06,
+ "grid": 161,
+ "retrieved": "2026-11-15",
+ "sites": {
+  "overberg": {
+   "lat": -34.2,
+   "lon": 19.801,
+   "elev_min": 153.3,
+   "elev_max": 349,
+   "image_day": "2025-08-02"
+  },
+  "swartland": {
+   "lat": -33.46,
+   "lon": 18.73,
+   "elev_min": 77,
+   "elev_max": 353.1,
+   "image_day": "2025-07-28"
+  }
+ }
+}

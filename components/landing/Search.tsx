@@ -4,7 +4,8 @@ import { useId, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { GAZETTEER } from "@/lib/gazetteer";
 import { parseLatLon, resolvePlace } from "@/lib/scope";
-import Globe, { type GlobeTarget } from "./Globe";
+import type { GlobeTarget } from "./Globe";
+import Globe from "./Globe3D";
 
 function lookup(text: string): GlobeTarget | null {
   const q = text.trim().toLowerCase();

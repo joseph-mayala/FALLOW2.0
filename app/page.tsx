@@ -76,7 +76,7 @@ export default function Home() {
       <footer className="land-foot">
         <p>
           Data: NASA GPM IMERG, NASA POWER (<Led ids="ob_t2m">MERRA-2</Led>), AWS Terrain Tiles, ISRIC SoilGrids, iSDA. Field outlines: Fields of the World,
-          computer-predicted (<Led ids="licence_ftw">CC-BY-4.0 as credited; licence not yet verified by us</Led>). Globe coastline: Natural Earth, public domain.
+          computer-predicted (<Led ids="licence_ftw">CC-BY-NC-SA-4.0</Led>). Globe coastline: Natural Earth, public domain.
         </p>
         <p>
           Model values, not measurements. Not reviewed by a grower. AI-assisted build. Built for the NASA Space Apps Challenge{" "}

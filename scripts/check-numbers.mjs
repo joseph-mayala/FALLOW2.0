@@ -7,7 +7,7 @@ import { chromium } from "./_pw.mjs";
 import { BASE, PAGES, SITES, expand } from "./pages.mjs";
 
 // Names that contain a digit but are not quantities. Removed before the digit test.
-const NAMES = ["ERA5", "MERRA-2", "R1", "R3"];
+const NAMES = ["ERA5", "MERRA-2", "R1", "R3", "3D", "Sentinel-2"];
 
 const ids = new Set();
 const rows = {};

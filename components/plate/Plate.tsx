@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   DEPTHS, MONTHS_LONG, MONTHS_SHORT, PLATE_MONTH, SITE_NAME, get, num, series, sitePrefix,
-  rainSummary, soilCompare, sunNoon, type SiteId,
+  rainSummary, soilCompare, sunNoon, verdict, type SiteId,
 } from "@/lib/ledger";
 import { Calc, Led, N, Struct, fmt } from "@/components/led";
 import { Glyph, Logo, type GlyphKind } from "./glyphs";
@@ -32,10 +32,10 @@ function MonthStrip({ id, label }: { id: string; label: string }) {
     <svg className="strip" viewBox="0 0 120 34" role="img" aria-label={text} data-led={id}>
       {v.map((x, i) => {
         const h = Math.max(1.5, (x / max) * 26);
-        return <rect key={i} x={1 + i * 10} y={26 - h} width={7.6} height={h} fill={i === PLATE_MONTH ? "#3f5a2a" : "#c2ceae"} />;
+        return <rect key={i} x={1 + i * 10} y={26 - h} width={7.6} height={h} fill={i === PLATE_MONTH ? "var(--bar)" : "var(--bar-weak)"} />;
       })}
-      <path d="M0 26.4h120" stroke="#4d4c48" strokeWidth="0.8" />
-      <path d={`M${1 + PLATE_MONTH * 10 + 3.8 - 3.2} 33.5l3.2-4.6 3.2 4.6z`} transform="translate(0 -1.5)" fill="#16150f" />
+      <path d="M0 26.4h120" stroke="var(--rule-strong)" strokeWidth="0.8" />
+      <path d={`M${1 + PLATE_MONTH * 10 + 3.8 - 3.2} 33.5l3.2-4.6 3.2 4.6z`} transform="translate(0 -1.5)" fill="var(--ink)" />
     </svg>
   );
 }
@@ -89,19 +89,19 @@ function RainBars({ site }: { site: SiteId }) {
   return (
     <div className="rain">
       <svg className="rain-svg" viewBox="0 0 442 122" role="img" aria-label={text} data-led={rs.sources.map((s) => s.id).join(" ")}>
-        <path d={`M66.5 ${topHi}H379M66.5 ${topLo}H379`} stroke="#16150f" strokeWidth="0.9" strokeDasharray="1.2 2.6" fill="none" />
-        <path d={`M374 ${topHi}h5.5V${topLo}h-5.5`} stroke="#16150f" strokeWidth="1" fill="none" />
+        <path d={`M66.5 ${topHi}H379M66.5 ${topLo}H379`} stroke="var(--ink)" strokeWidth="0.9" strokeDasharray="1.2 2.6" fill="none" />
+        <path d={`M374 ${topHi}h5.5V${topLo}h-5.5`} stroke="var(--ink)" strokeWidth="1" fill="none" />
         {rs.sources.map((s, i) => {
           const h = s.value * K, x = 19.5 + i * 88.3;
           return (
             <g key={s.key}>
-              <rect x={x} y={base - h} width={47} height={h} fill={i === 0 ? "#3f5a2a" : "#a9ba91"} stroke="#16150f" strokeWidth="0.8" />
-              <text x={x + 23.5} y={base - h + 17.5} textAnchor="middle" className="rain-val" fill={i === 0 ? "#ffffff" : "#16150f"}>{s.value}</text>
+              <rect x={x} y={base - h} width={47} height={h} fill={i === 0 ? "var(--bar)" : "var(--bar-mid)"} stroke="var(--ink)" strokeWidth="0.8" />
+              <text x={x + 23.5} y={base - h + 17.5} textAnchor="middle" className="rain-val" fill={i === 0 ? "var(--on-bar)" : "var(--ink)"}>{s.value}</text>
               <text x={x + 23.5} y={119} textAnchor="middle" className="rain-name">{s.short}{s.ecmwf ? "*" : ""}</text>
             </g>
           );
         })}
-        <path d="M0 100.4h368" stroke="#16150f" strokeWidth="1" />
+        <path d="M0 100.4h368" stroke="var(--ink)" strokeWidth="1" />
       </svg>
       <p className="rain-spread">
         <span>spread</span>
@@ -160,6 +160,7 @@ export default function Plate({ site, view }: { site: SiteId; view: ReactNode })
   const sun = sunNoon(site);
   const plateNo = site === "overberg" ? 1 : 2;
   const lat = Math.abs(sun.lat);
+  const v = verdict();
 
   return (
     <article className="plate" aria-labelledby="plate-title">
@@ -176,6 +177,16 @@ export default function Plate({ site, view }: { site: SiteId; view: ReactNode })
       </header>
 
       <div className="blk plate-view" style={at(472, 66, 904)}>{view}</div>
+
+      <section className="blk answer-card" aria-labelledby="h-answer">
+        <p className="label">Plain answer</p>
+        <h2 id="h-answer">{v.canName ? "The sourced cells allow a comparison" : "No winner can be named from today\u2019s sources"}</h2>
+        <p>
+          <Calc from={v.from}><b>{v.sourced} of {v.total}</b></Calc> cells of the wheat-or-break-crop comparison have a sourced value for {name}.
+          Fallow shows what is known, and what would settle it.
+        </p>
+        <a className="btn" href="#answer">See the rotation analysis</a>
+      </section>
 
       <section className="blk" style={at(63, 227, 405)} aria-labelledby="h-air">
         <h2 className="label" id="h-air">The air above · {MONTH}</h2>
@@ -201,7 +212,7 @@ export default function Plate({ site, view }: { site: SiteId; view: ReactNode })
           <WetBar id={`${p}_wet_surface`} label="surface" />
           <WetBar id={`${p}_wet_root`} label="root zone" />
           <WetBar id={`${p}_wet_profile`} label="profile" />
-          <p className="wet-note">modelled,<br />not measured<br />soil moisture</p>
+          <p className="wet-note">modelled,{" "}<br />not measured{" "}<br />soil moisture</p>
         </div>
         <Src glyph="single">NASA POWER (<Led ids={`${p}_wet_surface`}>MERRA-2</Led>) · single model source</Src>
       </section>
@@ -238,6 +249,7 @@ export default function Plate({ site, view }: { site: SiteId; view: ReactNode })
 
       <section className="blk" style={at(1378.5, 431, 480)} aria-labelledby="h-depth">
         <h2 className="label" id="h-depth">The soil by depth · six horizons</h2>
+        <div className="depth-src"><Src glyph="low">ISRIC SoilGrids · low: first look · every layer</Src></div>
         <ul className="depths">
           {DEPTHS.map((d) => {
             const k = d.replace("-", "_");
@@ -297,9 +309,12 @@ export default function Plate({ site, view }: { site: SiteId; view: ReactNode })
       <footer className="blk credits" style={at(63, 1021, 1795.5)}>
         <p>
           Data: NASA GPM IMERG, NASA POWER (<Led ids={`${p}_t2m`}>MERRA-2</Led>), AWS Terrain Tiles, ISRIC SoilGrids, iSDA. Field outlines: Fields of the World
-          (<Led ids="licence_ftw">CC-BY-4.0 as credited; licence not yet verified by us</Led>), computer-predicted.
+          (<Led ids="licence_ftw">CC-BY-NC-SA-4.0</Led>), computer-predicted.
         </p>
-        <p>Block drawing: a baked image, drawn by code from the data files on <Led ids="ob_rain_monthly">14 Nov 2026</Led>. Text and charts are live from the ledger. AI-assisted. Not affiliated with or endorsed by NASA.</p>
+        <p>
+          3D block: <Led ids={`${p}_b3d_image`}>NASA HLS satellite image</Led> over AWS terrain, drawn in the browser from files bundled with the page. Drawing: a baked image, drawn by code from the data files on{" "}
+          <Led ids="ob_rain_monthly">14 Nov 2026</Led>. Text and charts are live from the ledger. AI-assisted. Not affiliated with or endorsed by NASA.
+        </p>
       </footer>
     </article>
   );

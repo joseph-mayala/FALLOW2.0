@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
   }
 
   const envModel = process.env.GEMINI_MODEL;
-  const model = envModel && /^[\w.-]{1,60}$/.test(envModel) ? envModel : "gemini-2.0-flash";
+  const model = envModel && /^[\w.-]{1,60}$/.test(envModel) ? envModel : "gemini-3.5-flash-lite";
   let payload: ReturnType<typeof buildPayload>;
   let payloadJson: string;
   try {

@@ -1,65 +1,131 @@
 # Fallow
 
-**Field profiles drawn live from open data.**
+**Rest it, or plant again?**
 NASA Space Apps Challenge 2026 · *Field Shift: Adapting Farms with NASA Data*
 
-One block of farmland, rendered as an interactive 3D cut block: real terrain on
-top, the soil by depth on the cut faces, a long-term average month in the air
-above — and **today's actual weather in the sky over the block** (sun where it
-really is, clouds, rain, lightning when a storm is passing). Around the block,
-every number on the plate names its source, and where sources disagree, the
-plate shows the disagreement instead of hiding it.
+## How to run it
 
-Two live plates: **Overberg** and **Swartland**, Western Cape — the lead sites
-for the question the tool is built around: *next winter, wheat on wheat again,
-or a lupin/canola break crop?*
+You need [Node.js](https://nodejs.org) 18.17 or newer (version 20 or later is best) and Git.
 
-## Run it
+1. Get the code:
 
-```bash
-npm install
-npm run dev
-# open http://localhost:3000
-```
+   ```bash
+   git clone https://github.com/joseph-mayala/FALLOW2.0.git
+   ```
 
-That's it — the app runs fully on keyless open data. No login anywhere.
+2. Go into the folder:
 
-### Optional keys (`.env.local`)
+   ```bash
+   cd FALLOW2.0
+   ```
 
-Copy `.env.example` → `.env.local`. Everything is optional:
+3. Install what it needs (about a minute, once):
 
-| Key | Unlocks |
-| --- | --- |
-| `GEMINI_API_KEY` | The **rotation analysis drawer** — sends the plate's live data to Google Gemini for a wheat-vs-break-crop read with confidence labels. Free key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| `ISDA_USERNAME` / `ISDA_PASSWORD` | iSDA Africa 30 m soil map — second opinion next to SoilGrids in the topsoil comparison |
-| `METEOMATICS_USERNAME` / `METEOMATICS_PASSWORD` | Fourth independent source in the annual-rain cross-check |
-| `OPEN_METEO_API_KEY` | Only if you hit Open-Meteo's free rate limit |
+   ```bash
+   npm install
+   ```
 
-## Data sources (all fetched live, server-side cached)
+4. Start it:
 
-| What | Source | Notes |
+   ```bash
+   npm run dev
+   ```
+
+5. Open **http://localhost:3000** in your browser. Stop it with `Ctrl + C`.
+
+No key, account or login is needed. The pages make no third-party request:
+fonts, globe imagery, satellite images and terrain are all in this repository.
+
+To run the production version instead, use `npm run build` and then `npm start`.
+
+**Optional:** copy `.env.example` to `.env.local` and add a `GEMINI_API_KEY` to
+turn on the AI analysis in the rotation sheet. It is labelled as AI-generated
+and not validated. Everything else works without it.
+
+If port 3000 is busy, Next.js picks the next free port and prints the address.
+
+## What Fallow is
+
+Fallow helps a wheat grower or adviser in South Africa's Western Cape look at one
+question: next winter, wheat on wheat again, or a lupin or canola break crop?
+It compares the two rotations, shows where every figure comes from, and says
+plainly when the sources are too thin or too far apart to name a winner. Today
+they are, so the page names none.
+
+Two sites have full data: **Overberg** (the worked example) and **Swartland**
+(the example of sources that disagree).
+
+## What is on the page
+
+- **Globe** (`/`): the Earth from NASA Blue Marble imagery, with the two sites
+  marked. Drag to turn it. A place search over a baked list, or a latitude and
+  longitude. No online geocoder.
+- **Field view** (`/field/overberg`, `/field/swartland`): a dashboard around a
+  3D block of the site. A NASA satellite image lies over real terrain, lit by
+  the computed noon sun, with six soil layers on the cut faces. Point at a
+  layer and its row lights up. Around it: June climate, soil wetness, soil by
+  depth, rain from four sources, two soil maps side by side.
+- **Rotation analysis** (the sheet on the field view): the plain answer, then
+  what the sources show, why the answer is open, what would change it, and what
+  to do next.
+- **Ledger** (`/ledger`): every figure in the app as one row, with its source,
+  status and what would raise it.
+- **Other places** (`/place?lat=&lon=`): says what tier a place falls in and
+  declines the rotation panel where no data is baked in.
+
+## One ledger
+
+Every number on screen is a row in `lib/ledger/rows.ts`, or is computed in
+`lib/ledger/derive.ts` from rows it names. A row is:
+
+- **checked** when a source was opened and read, or the value was re-fetched and matched;
+- **unverified** when a source is named but we could not open it or confirm it for the site;
+- **assumed** when no source was found (never used in a score);
+- **our threshold** when it is a cut-off we chose.
+
+The team's research register (15 Nov 2026) was merged into the ledger. Each
+row took the status its source could support when we tried to open it that
+day. Sources that would not open stayed unverified, even where the register
+had marked them verified.
+
+## Data sources
+
+| What | Source | NASA |
 | --- | --- | --- |
-| Monthly climate (temp, humidity, rain, evaporation, soil wetness) | **NASA POWER** (MERRA-2) | keyless |
-| Annual rain cross-check | NASA POWER · Open-Meteo · ERA5 · Meteomatics | spread shown as computed uncertainty |
-| Soil by depth (clay, sand, pH × 6 horizons) | **ISRIC SoilGrids 2.0** (250 m) | modelled, not measured — and labelled so |
-| Terrain | **AWS Terrain Tiles** (terrarium) | not a survey; height ×5, stated on the plate |
-| Field outlines | **OpenStreetMap** via Overpass | community-mapped, not complete |
-| Live sky | **Open-Meteo** → **MET Norway** fallback | drives sun/clouds/rain/storm over the block |
-| Sun position & arc | computed astronomy | computed, not a measurement |
+| Rain, primary | GPM IMERG, 2015–2024 average | yes |
+| Temperature, humidity, evaporation, soil wetness | NASA POWER (MERRA-2) climatology | yes |
+| Satellite image on the 3D block | HLS (Harmonized Landsat and Sentinel-2), via NASA GIBS | yes |
+| Globe imagery | Blue Marble, via NASA GIBS | yes |
+| Rain cross-checks | Open-Meteo, ERA5, Meteomatics | no |
+| Soil by depth | ISRIC SoilGrids, with iSDA as a second map | no |
+| Terrain | AWS Terrain Tiles | no |
+| Field outlines (on the flat drawing) | Fields of the World, South Africa, CC-BY-NC-SA-4.0 | no |
+| Rotation facts and the yield trial | ARC-SGI guidelines and trial; Department of Agriculture canola guideline | no |
 
-## Honesty rules (from the team briefing)
+## Scripts
 
-- Model values, not measurements — said on every plate.
-- Every number names its source inline; missing keys show **“needs key”**, not silence.
-- The AI drawer is labelled **AI-generated · not validated**, and is asked to
-  name the data block behind every number it uses and to list what the data
-  cannot know.
-- No NASA logos. Plain-text event name only.
+| Command | What it does |
+| --- | --- |
+| `npm run build` | Production build |
+| `npm run typecheck` | TypeScript check |
+| `node scripts/bake-3d.mjs` | Re-fetches the globe image, the two satellite images and the terrain heights, and writes them into `public/art` |
+| `npm run check:numbers` | Fails if any number on screen has no ledger row (needs Playwright) |
+| `npm run check:network` | Fails if a page makes a third-party request (needs Playwright) |
+| `npm run verify:sources` | Re-fetches what can be re-fetched and compares it with the ledger |
 
-## AI use disclosure
+## What this cannot tell you
 
-Built with AI assistance (Claude Code) from live API responses; the analysis
-drawer calls Google Gemini at the user's request and labels its output as
-AI-generated. No AI-generated imagery is presented as data.
+- Model values, not measurements. One grid cell can cover many farms.
+- Nothing here has been tested with a grower or against a field trial.
+- The satellite image shows one winter day. No figure is derived from it.
+- The field outlines are computer predictions, not surveyed boundaries.
+
+## AI use
+
+AI agents (Claude, Anthropic) wrote the code, packaged the data and drafted the
+copy, under human direction. The team's research register was drafted with AI
+assistance. The optional analysis calls Google Gemini at the reader's request.
+The 3D views are drawn by code from the bundled NASA imagery and terrain; no
+AI-generated image or video is used.
 
 *Not affiliated with or endorsed by NASA.*
