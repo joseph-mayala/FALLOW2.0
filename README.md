@@ -3,7 +3,17 @@
 **Rest it, or plant again?**
 NASA Space Apps Challenge 2026 · *Field Shift: Adapting Farms with NASA Data*
 
-## How to run it
+## How to open it
+
+There are two ways.
+
+### Option 1: just click the link
+
+**https://fallow2.vercel.app**
+
+Nothing to install and no login. It works on a phone.
+
+### Option 2: run it on your own computer
 
 You need [Node.js](https://nodejs.org) 18.17 or newer (version 20 or later is best) and Git.
 
@@ -38,9 +48,9 @@ fonts, globe imagery, satellite images and terrain are all in this repository.
 
 To run the production version instead, use `npm run build` and then `npm start`.
 
-**Optional:** copy `.env.example` to `.env.local` and add a `GEMINI_API_KEY` to
-turn on the AI analysis in the rotation sheet. It is labelled as AI-generated
-and not validated. Everything else works without it.
+**Optional, for option 2 only:** copy `.env.example` to `.env.local` and add a
+`GEMINI_API_KEY` to turn on the AI analysis in the rotation sheet. It is
+labelled as AI-generated and not validated. Everything else works without it.
 
 If port 3000 is busy, Next.js picks the next free port and prints the address.
 

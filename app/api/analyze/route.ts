@@ -95,7 +95,7 @@ function checkNumbers(markdown: string, allowed: Set<string>) {
 }
 
 export async function POST(req: NextRequest) {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY ?? process.env.GEMINI_KEY;
   if (!key) {
     return NextResponse.json({ configured: false, error: "The AI analysis is switched off on this server." }, { status: 200 });
   }
